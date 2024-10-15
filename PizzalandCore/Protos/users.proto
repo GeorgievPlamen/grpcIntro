@@ -1,0 +1,60 @@
+syntax = "proto3";
+
+option csharp_namespace = "PizzalandCore";
+
+package users;
+
+import "google/protobuf/timestamp.proto";
+
+service UserService {
+  rpc RegisterUser (RegisterRequest) returns (UserResponse);
+  rpc GetUser (GetUserRequest) returns (UserResponse);
+  rpc UpdateUser (UpdateUserRequest) returns (UserResponse);
+  rpc DeleteUser (DeleteUserRequest) returns (DeleteUserResponse);
+  rpc ListUsers (ListUsersRequest) returns (ListUsersResponse);
+}
+
+message RegisterRequest {
+    string name = 1;
+    string email = 2;
+    string password = 3;
+}
+
+message GetUserRequest {
+  string id = 1;
+}
+
+message UpdateUserRequest {
+  string id = 1;
+  string name = 2;
+  string email = 3;
+  string password = 4;
+  bool is_active = 5;
+}
+
+message DeleteUserRequest {
+  string id = 1;
+}
+
+message UserResponse {
+  User user = 1;
+}
+
+message DeleteUserResponse {
+  string message = 1;
+}
+
+message ListUsersRequest {
+}
+
+message ListUsersResponse {
+  repeated User users = 1;
+}
+
+message User {
+  string id = 1;
+  string name = 2;
+  string email = 3;
+  google.protobuf.Timestamp date_registered = 4;
+  bool is_active = 5;
+}
