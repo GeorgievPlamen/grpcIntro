@@ -1,48 +1,50 @@
+using Microsoft.EntityFrameworkCore;
 using PizzalandCore.Interfaces;
 using PizzalandCore.Models;
 
 namespace PizzalandCore.Db.Repositories;
 
-public class PizzaRepository : IPizzaRepository
+public class PizzaRepository(PizzalandContext dbContext) : IPizzaRepository
 {
-    private readonly List<Pizza> pizzas = [];
+    private readonly PizzalandContext _dbContext = dbContext;
 
-    public Pizza AddPizzaAsync(Pizza pizza)
+    public async Task<Pizza> AddPizzaAsync(Pizza pizza)
     {
-        pizzas.Add(pizza);
-
+        await _dbContext.AddAsync(pizza);
+        await _dbContext.SaveChangesAsync();
         return pizza;
     }
 
-    public bool DeletePizzaAsync(Guid id)
+    public async Task<bool> DeletePizzaAsync(Guid id)
     {
-        var pizza = pizzas.Find(x => x.Id == id);
+        var pizza = await _dbContext.Pizzas.FindAsync(id);
+        if (pizza == null)
+        {
+            return false;
+        }
 
-        if (pizza is null) return false;
+        _dbContext.Pizzas.Remove(pizza);
 
-        pizzas.Remove(pizza);
+        await _dbContext.SaveChangesAsync();
 
         return true;
     }
 
-    public Pizza? GetPizzaAsync(Guid id)
+    public async Task<Pizza?> GetPizzaAsync(Guid id)
     {
-        return pizzas.Find(x => x.Id == id);
+        return await _dbContext.Pizzas.FindAsync(id);
     }
 
-    public List<Pizza> GetPizzasAsync()
+    public async Task<List<Pizza>> GetPizzasAsync()
     {
-        return [.. pizzas];
+        return await _dbContext.Pizzas.ToListAsync();
     }
 
-    public Pizza? UpdatePizzaAsync(Pizza pizza)
+    public async Task<Pizza?> UpdatePizzaAsync(Pizza pizza)
     {
-        var foundPizza = pizzas.Find(x => x.Id == pizza.Id);
+        _dbContext.Pizzas.Update(pizza);
 
-        if (foundPizza is null) return null;
-
-        pizzas.Remove(foundPizza);
-        pizzas.Add(pizza);
+        await _dbContext.SaveChangesAsync();
         return pizza;
     }
 }

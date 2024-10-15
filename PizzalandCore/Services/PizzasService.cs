@@ -16,7 +16,7 @@ public class PizzasService(IPizzaRepository pizzaRepository) : PizzaService.Pizz
             request.Ingredients.ToArray(),
             Convert.ToDecimal(request.Price));
 
-        var response = _pizzaRepository.AddPizzaAsync(newPizza);
+        var response = await _pizzaRepository.AddPizzaAsync(newPizza);
 
         var responsePizza = MapToPizzaResponse(response);
 
@@ -25,7 +25,7 @@ public class PizzasService(IPizzaRepository pizzaRepository) : PizzaService.Pizz
 
     public async override Task<DeletePizzaResponse> DeletePizza(DeletePizzaRequest request, ServerCallContext context)
     {
-        var result = _pizzaRepository.DeletePizzaAsync(Guid.Parse(request.Id));
+        var result = await _pizzaRepository.DeletePizzaAsync(Guid.Parse(request.Id));
 
         var responseMsg =
             result ?
@@ -44,22 +44,24 @@ public class PizzasService(IPizzaRepository pizzaRepository) : PizzaService.Pizz
             request.Pizza.Ingredients.ToArray(),
             Convert.ToDecimal(request.Pizza.Price));
 
-        var response = _pizzaRepository.UpdatePizzaAsync(newPizza);
+        var response = await _pizzaRepository.UpdatePizzaAsync(newPizza);
 
         var responsePizza = MapToPizzaResponse(response!);
 
         return new PizzaResponse { Pizza = responsePizza };
     }
 
-    public async override Task<PizzaResponse> GetPizza(GetPizzaRequest request, ServerCallContext context)
+    public async override Task<PizzaResponse?> GetPizza(GetPizzaRequest request, ServerCallContext context)
     {
-        var responsePizza = MapToPizzaResponse(_pizzaRepository.GetPizzaAsync(Guid.Parse(request.Id)));
+        var foundPizza = await _pizzaRepository.GetPizzaAsync(Guid.Parse(request.Id));
+        if (foundPizza is null) return null;
+        var responsePizza = MapToPizzaResponse(foundPizza);
         return new PizzaResponse { Pizza = responsePizza };
     }
 
     public async override Task<ListPizzasResponse> ListPizzas(ListPizzasRequest request, ServerCallContext context)
     {
-        var pizzas = _pizzaRepository.GetPizzasAsync();
+        var pizzas = await _pizzaRepository.GetPizzasAsync();
 
         var pizzaResponses = pizzas.Select(MapToPizzaResponse).ToList();
 

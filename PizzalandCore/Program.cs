@@ -1,3 +1,4 @@
+using PizzalandCore.Db;
 using PizzalandCore.Db.Repositories;
 using PizzalandCore.Interfaces;
 using PizzalandCore.Services;
@@ -6,6 +7,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddGrpc();
+builder.Services.AddSqlite<PizzalandContext>(builder.Configuration.GetConnectionString("SQLITE"));
 builder.Services.AddScoped<IPizzaRepository, PizzaRepository>();
 
 var app = builder.Build();

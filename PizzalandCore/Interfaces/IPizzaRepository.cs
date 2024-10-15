@@ -4,9 +4,9 @@ namespace PizzalandCore.Interfaces;
 
 public interface IPizzaRepository
 {
-    Pizza? GetPizzaAsync(Guid id);
-    List<Pizza> GetPizzasAsync();
-    Pizza AddPizzaAsync(Pizza pizza);
-    bool DeletePizzaAsync(Guid id);
-    Pizza? UpdatePizzaAsync(Pizza pizza);
+    Task<Pizza?> GetPizzaAsync(Guid id);
+    Task<List<Pizza>> GetPizzasAsync();
+    Task<Pizza> AddPizzaAsync(Pizza pizza);
+    Task<bool> DeletePizzaAsync(Guid id);
+    Task<Pizza?> UpdatePizzaAsync(Pizza pizza);
 }
