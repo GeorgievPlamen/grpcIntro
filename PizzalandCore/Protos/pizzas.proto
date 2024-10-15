@@ -1,0 +1,63 @@
+syntax = "proto3";
+
+option csharp_namespace = "PizzalandCore";
+
+package pizzas;
+
+service PizzaService {
+  rpc CreatePizza (CreatePizzaRequest) returns (PizzaResponse);
+  rpc GetPizza (GetPizzaRequest) returns (PizzaResponse);
+  rpc UpdatePizza (UpdatePizzaRequest) returns (PizzaResponse);
+  rpc DeletePizza (DeletePizzaRequest) returns (DeletePizzaResponse);
+  rpc ListPizzas (ListPizzasRequest) returns (ListPizzasResponse);
+}
+
+message CreatePizzaRequest {
+  string name = 1;
+  PizzaCrust crust_type = 2;
+  repeated string ingredients = 3;
+  double price = 4;
+}
+
+message GetPizzaRequest {
+  string id = 1;
+}
+
+message UpdatePizzaRequest {
+  PizzaProto pizza = 1;
+}
+
+message DeletePizzaRequest {
+  string id = 1;
+}
+
+message PizzaResponse {
+  PizzaProto pizza = 1;
+}
+
+message DeletePizzaResponse {
+  string message = 1;
+}
+
+message ListPizzasRequest {
+}
+
+message ListPizzasResponse {
+  repeated PizzaProto pizzas = 1;
+}
+
+message PizzaProto {
+  string id = 1;
+  string name = 2;
+  PizzaCrust crust_type = 3;
+  repeated string ingredients = 4;
+  double price = 5;
+}
+
+enum PizzaCrust {
+  ITALIAN = 0;
+  THIN = 1;
+  MEDIUM = 2;
+  THICK = 3;
+  STUFFED = 4;
+}

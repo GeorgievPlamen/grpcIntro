@@ -1,0 +1,27 @@
+namespace PizzalandCore.Models;
+
+public class Pizza
+{
+    public Guid Id { get; set; }
+    public string Name { get; set; }
+    public PizzaCrust CrustType { get; set; }
+    public string[] Ingredients { get; set; }
+    public decimal Price { get; set; }
+
+    public Pizza(string name, PizzaCrust crustType, string[] ingredients, decimal price)
+    {
+        Id = Guid.NewGuid();
+        Name = name;
+        CrustType = crustType;
+        Ingredients = ingredients;
+        Price = price;
+    }
+    public Pizza(Guid id, string name, PizzaCrust crustType, string[] ingredients, decimal price)
+    {
+        Id = id;
+        Name = name;
+        CrustType = crustType;
+        Ingredients = ingredients;
+        Price = price;
+    }
+}
