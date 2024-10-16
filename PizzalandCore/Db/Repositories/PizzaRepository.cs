@@ -40,6 +40,11 @@ public class PizzaRepository(PizzalandContext dbContext) : IPizzaRepository
         return await _dbContext.Pizzas.ToListAsync();
     }
 
+    public async Task<List<Pizza>> GetPizzasByIdsAsync(List<Guid> ids)
+    {
+        return await _dbContext.Pizzas.Where(x => ids.Contains(x.Id)).ToListAsync();
+    }
+
     public async Task<Pizza?> UpdatePizzaAsync(Pizza pizza)
     {
         _dbContext.Pizzas.Update(pizza);

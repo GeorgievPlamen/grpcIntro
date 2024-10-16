@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using PizzalandCore.Interfaces;
+using PizzalandCore.Models;
 
 namespace PizzalandCore.Db.Repositories;
 
@@ -14,7 +15,7 @@ public class UserRepository(PizzalandContext dbContext) : IUserRepository
         return user;
     }
 
-    public async Task<bool> DeleteUserAsync(User id)
+    public async Task<bool> DeleteUserAsync(Guid id)
     {
         var user = await _dbContext.Users.FindAsync(id);
         if (user == null)
@@ -32,6 +33,11 @@ public class UserRepository(PizzalandContext dbContext) : IUserRepository
     public async Task<User?> GetUserAsync(Guid id)
     {
         return await _dbContext.Users.FindAsync(id);
+    }
+
+    public async Task<User?> GetUserByEmailAsync(string email)
+    {
+        return await _dbContext.Users.FirstOrDefaultAsync(x => x.Email == email);
     }
 
     public async Task<List<User>> GetUsersAsync()
