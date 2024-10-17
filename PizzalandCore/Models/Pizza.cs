@@ -1,8 +1,12 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace PizzalandCore.Models;
 
 public class Pizza
 {
+    [Required]
     public Guid Id { get; set; }
+    [Required]
     public string Name { get; set; }
     public PizzaCrust CrustType { get; set; }
     public string[] Ingredients { get; set; }

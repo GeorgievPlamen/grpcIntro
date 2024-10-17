@@ -1,10 +1,12 @@
 using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
+using Microsoft.AspNetCore.Authorization;
 using PizzalandCore.Interfaces;
 using PizzalandCore.Models;
 
 namespace PizzalandCore.Services;
 
+[Authorize]
 public class OrdersService(IOrderRepository orderRepository, IPizzaRepository pizzaRepository) : OrderService.OrderServiceBase
 {
     private readonly IOrderRepository _orderRepository = orderRepository;
@@ -34,24 +36,59 @@ public class OrdersService(IOrderRepository orderRepository, IPizzaRepository pi
         return new OrderResponse { Order = orderResponse };
     }
 
-    public override Task<DeleteOrderResponse> DeleteOrder(DeleteOrderRequest request, ServerCallContext context)
+    public async override Task<DeleteOrderResponse> DeleteOrder(DeleteOrderRequest request, ServerCallContext context)
     {
-        return base.DeleteOrder(request, context);
+        var result = await _orderRepository.DeleteOrderAsync(Guid.Parse(request.Id));
+
+        var responseMsg =
+            result ?
+            $"Deleted Order with id:{request.Id}." :
+            $"Failed to delete or could not find Order with id: {request.Id}.";
+
+        return new DeleteOrderResponse { Message = responseMsg };
     }
 
-    public override Task<OrderResponse> UpdateOrder(UpdateOrderRequest request, ServerCallContext context)
+    public async override Task<OrderResponse?> UpdateOrder(UpdateOrderRequest request, ServerCallContext context)
     {
-        return base.UpdateOrder(request, context);
+        var order = await _orderRepository.GetOrderAsync(Guid.Parse(request.Order.Id));
+
+        if (order is null) return null;
+
+        List<Guid> guids = request.Order.PizzaIdsOrdered.Split(',').Select(x => Guid.Parse(x)).ToList();
+        order.PizzaIdsOrdered.AddRange(guids);
+
+        var pizzas = await _pizzaRepository.GetPizzasByIdsAsync(order.PizzaIdsOrdered);
+
+        foreach (var pizza in pizzas)
+        {
+            order.Price += pizza.Price;
+        }
+
+        await _orderRepository.AddOrderAsync(order);
+
+        var orderResponse = MapToOrderProto(order);
+
+        return new OrderResponse { Order = orderResponse };
     }
 
-    public override Task<OrderResponse> GetOrder(GetOrderRequest request, ServerCallContext context)
+    public async override Task<OrderResponse?> GetOrder(GetOrderRequest request, ServerCallContext context)
     {
-        return base.GetOrder(request, context);
+        var foundOrder = await _orderRepository.GetOrderAsync(Guid.Parse(request.Id));
+        if (foundOrder is null) return null;
+        var OrderResponse = MapToOrderProto(foundOrder);
+        return new OrderResponse { Order = OrderResponse };
     }
 
-    public override Task<ListOrdersResponse> ListOrders(ListOrdersRequest request, ServerCallContext context)
+    public async override Task<ListOrdersResponse> ListOrders(ListOrdersRequest request, ServerCallContext context)
     {
-        return base.ListOrders(request, context);
+        var Order = await _orderRepository.GetOrdersAsync();
+
+        var OrderResponse = Order.Select(MapToOrderProto).ToList();
+
+        return new ListOrdersResponse
+        {
+            Orders = { OrderResponse }
+        };
     }
 
     private static OrderProto MapToOrderProto(Order order) => new OrderProto
@@ -59,7 +96,7 @@ public class OrdersService(IOrderRepository orderRepository, IPizzaRepository pi
         Id = order.Id.ToString(),
         IsDeliveryCovored = order.IsDeliveryCovered,
         PizzaIdsOrdered = string.Join(",", order.PizzaIdsOrdered),
-        TimeOfOrder = Timestamp.FromDateTime(order.TimeOfOrder),
+        TimeOfOrder = Timestamp.FromDateTime(order.TimeOfOrder.ToUniversalTime()),
         TotalPrice = (double)order.TotalPrice,
         UserId = order.UserId.ToString()
     };

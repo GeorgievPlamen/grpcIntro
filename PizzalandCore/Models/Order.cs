@@ -1,9 +1,13 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace PizzalandCore.Models;
 
 public class Order
 {
     private const decimal _deliveryCost = 20;
+    [Required]
     public Guid Id { get; set; }
+    [Required]
     public Guid UserId { get; set; }
     public DateTime TimeOfOrder { get; init; } = DateTime.UtcNow;
     public List<Guid> PizzaIdsOrdered { get; set; } = [];

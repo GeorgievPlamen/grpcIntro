@@ -1,13 +1,15 @@
 using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
+using Microsoft.AspNetCore.Authorization;
 using PizzalandCore.Interfaces;
 using PizzalandCore.Models;
 
 namespace PizzalandCore.Services;
 
-public class UsersService(IUserRepository userRepository) : UserService.UserServiceBase
+public class UsersService(IUserRepository userRepository, IJwtGenerator jwtGenerator) : UserService.UserServiceBase
 {
     private readonly IUserRepository _userRepository = userRepository;
+    private readonly IJwtGenerator _jwtGenerator = jwtGenerator;
 
     public async override Task<UserResponse> RegisterUser(RegisterRequest request, ServerCallContext context)
     {
@@ -21,6 +23,8 @@ public class UsersService(IUserRepository userRepository) : UserService.UserServ
 
         var result = await _userRepository.AddUserAsync(newUser);
 
+        result.Token = _jwtGenerator.GetJwt(result.Email, result.Name);
+
         var userResponse = MapToUserProto(result);
 
         return new UserResponse { User = userResponse };
@@ -31,10 +35,14 @@ public class UsersService(IUserRepository userRepository) : UserService.UserServ
 
         if (foundUser!.Password != request.Password) return default!;
 
+        foundUser.Token = _jwtGenerator.GetJwt(foundUser.Email, foundUser.Name);
+
         var userResponse = MapToUserProto(foundUser!);
 
         return new UserResponse { User = userResponse };
     }
+
+    [Authorize]
     public async override Task<UserResponse> UpdateUser(UpdateUserRequest request, ServerCallContext context)
     {
         var newUser = new User
@@ -51,6 +59,8 @@ public class UsersService(IUserRepository userRepository) : UserService.UserServ
 
         return new UserResponse { User = userResponse };
     }
+
+    [Authorize]
     public async override Task<DeleteUserResponse> DeleteUser(DeleteUserRequest request, ServerCallContext context)
     {
         var result = await _userRepository.DeleteUserAsync(Guid.Parse(request.Id));
@@ -62,6 +72,8 @@ public class UsersService(IUserRepository userRepository) : UserService.UserServ
 
         return new DeleteUserResponse { Message = responseMsg };
     }
+
+    [Authorize]
     public async override Task<UserResponse?> GetUser(GetUserRequest request, ServerCallContext context)
     {
         var foundUser = await _userRepository.GetUserAsync(Guid.Parse(request.Id));
@@ -69,6 +81,8 @@ public class UsersService(IUserRepository userRepository) : UserService.UserServ
         var userResponse = MapToUserProto(foundUser);
         return new UserResponse { User = userResponse };
     }
+
+    [Authorize]
     public async override Task<ListUsersResponse> ListUsers(ListUsersRequest request, ServerCallContext context)
     {
         var Users = await _userRepository.GetUsersAsync();
@@ -86,7 +100,7 @@ public class UsersService(IUserRepository userRepository) : UserService.UserServ
         Id = user.Id.ToString(),
         Name = user.Name,
         Email = user.Email,
-        DateRegistered = Timestamp.FromDateTime(user.DateRegistered),
+        DateRegistered = Timestamp.FromDateTime(user.DateRegistered.ToUniversalTime()),
         IsActive = user.IsActive,
         Token = user.Token
     };

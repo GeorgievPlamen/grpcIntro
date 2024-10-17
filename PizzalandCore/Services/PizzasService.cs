@@ -1,4 +1,5 @@
 using Grpc.Core;
+using Microsoft.AspNetCore.Authorization;
 using PizzalandCore.Interfaces;
 using PizzalandCore.Models;
 
@@ -8,6 +9,7 @@ public class PizzasService(IPizzaRepository pizzaRepository) : PizzaService.Pizz
 {
     private readonly IPizzaRepository _pizzaRepository = pizzaRepository;
 
+    [Authorize]
     public async override Task<PizzaResponse> CreatePizza(CreatePizzaRequest request, ServerCallContext context)
     {
         Pizza newPizza = new(
@@ -23,6 +25,8 @@ public class PizzasService(IPizzaRepository pizzaRepository) : PizzaService.Pizz
         return new PizzaResponse { Pizza = responsePizza };
     }
 
+
+    [Authorize]
     public async override Task<DeletePizzaResponse> DeletePizza(DeletePizzaRequest request, ServerCallContext context)
     {
         var result = await _pizzaRepository.DeletePizzaAsync(Guid.Parse(request.Id));
@@ -35,6 +39,7 @@ public class PizzasService(IPizzaRepository pizzaRepository) : PizzaService.Pizz
         return new DeletePizzaResponse { Message = responseMsg };
     }
 
+    [Authorize]
     public async override Task<PizzaResponse> UpdatePizza(UpdatePizzaRequest request, ServerCallContext context)
     {
         Pizza newPizza = new(

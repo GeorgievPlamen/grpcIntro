@@ -1,7 +1,11 @@
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 using PizzalandCore.Db;
 using PizzalandCore.Db.Repositories;
 using PizzalandCore.Interfaces;
 using PizzalandCore.Services;
+using PizzalandCore.Utils;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,8 +15,16 @@ builder.Services.AddSqlite<PizzalandContext>(builder.Configuration.GetConnection
 builder.Services.AddScoped<IPizzaRepository, PizzaRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+builder.Services.AddScoped<IJwtGenerator, JwtGenerator>();
+builder.Services.AddAuthentication(defaultScheme: JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(opt => opt.TokenValidationParameters = new()
+    { ValidateIssuer = false, ValidateAudience = false, ValidateLifetime = true, IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("SuperSecretKeyDontUseLikeThisInRealEnvironment")) });
+builder.Services.AddAuthorization();
 
 var app = builder.Build();
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 // Configure the HTTP request pipeline.
 app.MapGrpcService<PizzasService>();
