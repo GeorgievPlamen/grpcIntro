@@ -30,11 +30,15 @@
                     <strong>Total Price:</strong> @order.TotalPrice<br />
                     <strong>Delivery Covered:</strong> @(order.IsDeliveryCovered ? "Yes" : "No")
                 </div>
-                <form asp-controller="Order" asp-action="DeleteOrder" method="post">
-                    @Html.AntiForgeryToken()
-                    <input type="hidden" name="id" value="@order.Id" />
-                    <button type="submit" class="btn btn-danger mt-2">Delete</button>
-                </form>
+                <div class="mt-2">
+                    <button class="btn btn-primary track-order-btn" data-order-id="@order.Id">Track Order</button>
+                    <form asp-controller="Order" asp-action="DeleteOrder" method="post" style="display:inline;">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@order.Id" />
+                        <button type="submit" class="btn btn-danger ms-2">Delete</button>
+                    </form>
+                </div>
+                <div id="orderStatus_@order.Id" class="mt-2 alert alert-info" style="display: none;"></div>
             </li>
         }
     </ul>
@@ -42,4 +46,42 @@
 else
 {
     <p>No orders available.</p>
+}
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/3.1.18/signalr.min.js"></script>
+    <script>
+        const connection = new signalR.HubConnectionBuilder().withUrl("/orderHub").build();
+
+        connection.start().then(() => {
+            console.log("SignalR connected");
+        }).catch(err => console.error(err.toString()));
+
+        connection.on("ReceiveOrderStatus", (orderId, status) => {
+            const statusDiv = document.getElementById(`orderStatus_${orderId}`);
+            if (statusDiv) {
+                statusDiv.style.display = "block";
+                statusDiv.innerText = status;
+            }
+        });
+
+        document.querySelectorAll(".track-order-btn").forEach(btn => {
+            btn.addEventListener("click", function () {
+                const orderId = this.getAttribute("data-order-id");
+                fetch(`/Order/TrackOrder`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ orderId: orderId })
+                }).then(response => {
+                    if (response.ok) {
+                        console.log(`Tracking started for order ${orderId}`);
+                    } else {
+                        console.error("Failed to start tracking");
+                    }
+                }).catch(err => console.error('Error:', err));
+            });
+        });
+    </script>
 }

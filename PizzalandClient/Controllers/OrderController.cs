@@ -1,14 +1,37 @@
 using Grpc.Core;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using pizzalandClient;
 using pizzalandClient.Interfaces;
 using pizzalandClient.Models;
+using pizzalandClient.SignalR;
 
-public class OrderController(OrderService.OrderServiceClient orderClient, ITokenProvider tokenProvider, ILogger<OrderController> logger) : Controller
+public class OrderController(IHubContext<OrderHub> hubContext, OrderService.OrderServiceClient orderClient, ITokenProvider tokenProvider, ILogger<OrderController> logger) : Controller
 {
+    private readonly IHubContext<OrderHub> _hubContext = hubContext;
     private readonly OrderService.OrderServiceClient _orderClient = orderClient;
     private readonly ITokenProvider _tokenProvider = tokenProvider;
     private readonly ILogger<OrderController> _logger = logger;
+
+
+    [HttpPost]
+    public async Task<IActionResult> TrackOrder([FromBody] pizzalandClient.Models.TrackOrderRequest request)
+    {
+        if (string.IsNullOrEmpty(request.OrderId))
+        {
+            return BadRequest("Order ID is required.");
+        }
+
+        using var call = _orderClient.TrackOrderStatus(new pizzalandClient.TrackOrderRequest { OrderId = request.OrderId });
+
+        await foreach (var update in call.ResponseStream.ReadAllAsync())
+        {
+            await _hubContext.Clients.All.SendAsync("ReceiveOrderStatus", request.OrderId, update.Status);
+        }
+
+
+        return Ok();
+    }
 
     [HttpGet]
     public async Task<IActionResult> ManageOrders()

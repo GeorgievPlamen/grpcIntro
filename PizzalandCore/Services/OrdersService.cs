@@ -12,6 +12,36 @@ public class OrdersService(IOrderRepository orderRepository, IPizzaRepository pi
     private readonly IOrderRepository _orderRepository = orderRepository;
     private readonly IPizzaRepository _pizzaRepository = pizzaRepository;
 
+    public override async Task TrackOrderStatus(TrackOrderRequest request, IServerStreamWriter<OrderStatusUpdate> responseStream, ServerCallContext context)
+    {
+        var statuses = new[]
+{
+            "Your order is accepted",
+            "Pizza is in the oven",
+            "Pizza is on the way",
+            "Pizza is at your door"
+        };
+
+        foreach (var status in statuses)
+        {
+            // Check if the client has cancelled the request
+            if (context.CancellationToken.IsCancellationRequested)
+                break;
+
+            var update = new OrderStatusUpdate
+            {
+                Status = status,
+                Time = Timestamp.FromDateTime(DateTime.UtcNow)
+            };
+
+            // Send the update
+            await responseStream.WriteAsync(update);
+
+            // Delay for 5 seconds to simulate status update
+            await Task.Delay(5000);
+        }
+    }
+
     public async override Task<OrderResponse> CreateOrder(CreateOrderRequest request, ServerCallContext context)
     {
         var newOrder = new Order

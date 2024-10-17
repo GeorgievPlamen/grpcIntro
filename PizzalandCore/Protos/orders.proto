@@ -12,6 +12,16 @@ service OrderService {
   rpc UpdateOrder (UpdateOrderRequest) returns (OrderResponse);
   rpc DeleteOrder (DeleteOrderRequest) returns (DeleteOrderResponse);
   rpc ListOrders (ListOrdersRequest) returns (ListOrdersResponse);
+  rpc TrackOrderStatus (TrackOrderRequest) returns (stream OrderStatusUpdate);
+}
+
+message TrackOrderRequest {
+  string order_id = 1;
+}
+
+message OrderStatusUpdate {
+  string status = 1;
+  google.protobuf.Timestamp time = 2;
 }
 
 message CreateOrderRequest {

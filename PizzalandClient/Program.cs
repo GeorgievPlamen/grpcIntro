@@ -1,11 +1,13 @@
 using pizzalandClient;
 using pizzalandClient.Interfaces;
 using pizzalandClient.Services;
+using pizzalandClient.SignalR;
 
 var serverUri = new Uri("http://localhost:5000");
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddSignalR();
 builder.Services.AddControllersWithViews();
 builder.Services.AddSingleton<ITokenProvider, TokenProvider>();
 builder.Services.AddGrpcClient<UserService.UserServiceClient>(o =>
@@ -62,5 +64,12 @@ app.UseAuthorization();
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
+
+app.UseEndpoints(endpoints =>
+{
+    endpoints.MapHub<OrderHub>("/orderHub");
+    endpoints.MapControllers();
+});
+
 
 app.Run();
