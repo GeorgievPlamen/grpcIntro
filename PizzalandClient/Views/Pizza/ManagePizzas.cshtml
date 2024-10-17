@@ -1,0 +1,87 @@
+@model pizzalandClient.Models.CreatePizzaViewModel
+@{
+    ViewBag.Title = "Manage Pizzas";
+}
+
+<h2>Manage Pizzas</h2>
+
+<div>
+    <h3>Create New Pizza</h3>
+    @using (Html.BeginForm("CreatePizza", "Pizza", FormMethod.Post, new { @class = "form" }))
+    {
+        @Html.AntiForgeryToken()
+
+        <div class="form-group">
+            @Html.LabelFor(m => m.Name)
+            @Html.TextBoxFor(m => m.Name, new { @class = "form-control", placeholder = "Pizza name" })
+            @Html.ValidationMessageFor(m => m.Name, "", new { @class = "text-danger" })
+        </div>
+
+        <div class="form-group">
+            @Html.LabelFor(m => m.CrustType)
+            @Html.DropDownListFor(m => m.CrustType,
+                     Enum.GetValues(typeof(pizzalandClient.Models.PizzaCrust)).Cast<pizzalandClient.Models.PizzaCrust>().Select(crust
+                     => new SelectListItem
+        {
+            Text = crust.ToString(),
+            Value = ((int)crust).ToString()
+        }), "Select Crust", new { @class = "form-control" })
+            @Html.ValidationMessageFor(m => m.CrustType, "", new { @class = "text-danger" })
+        </div>
+
+        <div class="form-group">
+            @Html.LabelFor(m => m.Ingredients)
+            <div>
+                @{
+                    var ingredients = new[] { "Cheese", "Tomato", "Pepperoni", "Onion", "Mushrooms", "Olives" };
+                    foreach (var ingredient in ingredients)
+                    {
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="ingredient_@ingredient" name="Ingredients"
+                                value="@ingredient" />
+                            <label class="form-check-label" for="ingredient_@ingredient">@ingredient</label>
+                        </div>
+                    }
+                }
+            </div>
+            @Html.ValidationMessageFor(m => m.Ingredients, "", new { @class = "text-danger" })
+        </div>
+
+        <div class="form-group">
+            @Html.LabelFor(m => m.Price)
+            @Html.TextBoxFor(m => m.Price, new { @class = "form-control", placeholder = "Pizza price" })
+            @Html.ValidationMessageFor(m => m.Price, "", new { @class = "text-danger" })
+        </div>
+
+        <button type="submit" class="btn btn-primary">Create Pizza</button>
+    }
+</div>
+
+<hr />
+
+<h3>Existing Pizzas</h3>
+
+@if (ViewBag.Pizzas != null && ViewBag.Pizzas.Count > 0)
+{
+    <ul class="list-group">
+        @foreach (var pizza in ViewBag.Pizzas)
+        {
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                <span>
+                    <strong>@pizza.Name</strong> - @pizza.CrustType | @pizza.Price
+                    <br />
+                    Ingredients: @string.Join(", ", pizza.Ingredients)
+                </span>
+                <form asp-controller="Pizza" asp-action="DeletePizza" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" value="@pizza.Id" />
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
+            </li>
+        }
+    </ul>
+}
+else
+{
+    <p>No pizzas available.</p>
+}

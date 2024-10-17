@@ -2,6 +2,10 @@ namespace pizzalandClient.Interfaces;
 
 public interface ITokenProvider
 {
-    Task<string> GetTokenAsync(CancellationToken cancellationToken);
+    string? GetToken(CancellationToken cancellationToken);
+    public void ClearToken();
+    public void SetToken(string jwt);
+    public void SetUserId(string id);
+    string? GetUserId();
 }
 

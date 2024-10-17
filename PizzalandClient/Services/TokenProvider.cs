@@ -1,19 +1,34 @@
 using pizzalandClient.Interfaces;
 
 namespace pizzalandClient.Services;
-public class TokenProvider(IHttpContextAccessor httpContextAccessor) : ITokenProvider
+public class TokenProvider() : ITokenProvider
 {
-    private readonly IHttpContextAccessor _httpContextAccessor = httpContextAccessor;
     private string? _token;
+    private string? _userId;
 
 
-    public async Task<string?> GetTokenAsync(CancellationToken cancellationToken)
+    public string? GetToken(CancellationToken cancellationToken)
     {
-        if (_token == null)
-        {
-            _token = _httpContextAccessor?.HttpContext?.Items["JWT"]?.ToString();
-        }
-
         return _token ?? null;
+    }
+
+    public void ClearToken()
+    {
+        _token = null;
+    }
+
+    public void SetToken(string jwt)
+    {
+        _token = jwt;
+    }
+
+    public void SetUserId(string id)
+    {
+        _userId = id;
+    }
+
+    public string? GetUserId()
+    {
+        return _userId;
     }
 }

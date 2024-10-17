@@ -35,9 +35,13 @@
                             <a class="nav-link text-dark" asp-area="" asp-controller="Pizza"
                                 asp-action="ListPizzas">Pizzas</a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-area="" asp-controller="Pizza"
+                                asp-action="ManagePizzas">Manage Pizzas</a>
+                        </li>
                     </ul>
                     <div class="d-flex align-items-center">
-                        @if (ViewBag.IsLoggedIn)
+                        @if (ViewBag?.IsLoggedIn == true)
                         {
                             <p class="mb-0 me-3">Logged in as: @ViewBag.UserName</p>
                             <form asp-controller="User" asp-action="Logout" method="post" class="d-inline">
@@ -51,6 +55,7 @@
                                 asp-action="Register">Register</a>
                         }
                     </div>
+
                 </div>
             </div>
         </nav>

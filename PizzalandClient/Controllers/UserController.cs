@@ -1,13 +1,18 @@
 using System.Diagnostics;
+using System.IdentityModel.Tokens.Jwt;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
+using pizzalandClient.Interfaces;
 using pizzalandClient.Models;
+using pizzalandClient.Services;
 
 namespace pizzalandClient.Controllers;
 
-public class UserController(ILogger<UserController> logger, UserService.UserServiceClient userClient) : Controller
+public class UserController(ILogger<UserController> logger, UserService.UserServiceClient userClient, ITokenProvider tokenProvider) : Controller
 {
     private readonly ILogger<UserController> _logger = logger;
     private readonly UserService.UserServiceClient _userClient = userClient;
+    private readonly ITokenProvider _tokenProvider = tokenProvider;
 
     [HttpGet]
     public ActionResult Login()
@@ -38,10 +43,9 @@ public class UserController(ILogger<UserController> logger, UserService.UserServ
 
             if (response.User?.Token != null)
             {
-                // Store token in session/cookie
-                HttpContext.Items.Add("JWT", response.User.Token);
+                tokenProvider.SetToken(response.User.Token);
+                tokenProvider.SetUserId(response.User.Id);
 
-                // Redirect to pizza listing page
                 return RedirectToAction("ListPizzas", "Pizza");
             }
             else
@@ -87,12 +91,10 @@ public class UserController(ILogger<UserController> logger, UserService.UserServ
 
             _logger.LogInformation($"Registered user: {response.User.Email}");
 
-            // Optionally log in the user after registration
             if (response.User?.Token != null)
             {
                 HttpContext.Items.Add("JWT", response.User.Token);
 
-                // Redirect to pizza listing page
                 return RedirectToAction("ListPizzas", "Pizza");
             }
             else
@@ -109,10 +111,43 @@ public class UserController(ILogger<UserController> logger, UserService.UserServ
         }
     }
 
+    public override async void OnActionExecuting(ActionExecutingContext context)
+    {
+        var token = _tokenProvider.GetToken(CancellationToken.None);
+        if (!string.IsNullOrEmpty(token))
+        {
+            string userName = GetUserNameFromToken(token);
+            ViewBag.IsLoggedIn = true;
+            ViewBag.UserName = userName;
+        }
+        else
+        {
+            ViewBag.IsLoggedIn = false;
+        }
+
+        base.OnActionExecuting(context);
+    }
+
+    [HttpPost]
+    public IActionResult Logout()
+    {
+        _tokenProvider.ClearToken();
+
+        return RedirectToAction("Index", "Home");
+    }
+
 
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
     public IActionResult Error()
     {
         return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+    }
+
+    private string GetUserNameFromToken(string token)
+    {
+        var handler = new JwtSecurityTokenHandler();
+        var jwtToken = handler.ReadJwtToken(token);
+        var userName = jwtToken.Claims.FirstOrDefault(c => c.Type == "name")?.Value;
+        return userName;
     }
 }

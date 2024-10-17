@@ -1,21 +1,22 @@
 using Microsoft.AspNetCore.Mvc;
 using pizzalandClient;
+using pizzalandClient.Interfaces;
+using pizzalandClient.Models;
+using PizzaCrust = pizzalandClient.Models.PizzaCrust;
 
-public class PizzaController : Controller
+public class PizzaController(ITokenProvider tokenProvider, ILogger<PizzaController> logger, PizzaService.PizzaServiceClient pizzaClient, OrderService.OrderServiceClient orderClient) : Controller
 {
-    private readonly PizzaService.PizzaServiceClient _pizzaClient;
-    private readonly OrderService.OrderServiceClient _orderClient;
-
-    public PizzaController(PizzaService.PizzaServiceClient pizzaClient, OrderService.OrderServiceClient orderClient)
-    {
-        _pizzaClient = pizzaClient;
-        _orderClient = orderClient;
-    }
+    private readonly ITokenProvider _tokenProvider = tokenProvider;
+    private readonly ILogger<PizzaController> _logger = logger;
+    private readonly PizzaService.PizzaServiceClient _pizzaClient = pizzaClient;
+    private readonly OrderService.OrderServiceClient _orderClient = orderClient;
 
     [HttpGet]
     public async Task<ActionResult> ListPizzas()
     {
         var response = await _pizzaClient.ListPizzasAsync(new ListPizzasRequest());
+
+        _logger.LogInformation(_tokenProvider.GetToken(CancellationToken.None));
 
         var pizzas = response.Pizzas.Select(p => new PizzaViewModel
         {
@@ -31,12 +32,13 @@ public class PizzaController : Controller
     [HttpPost]
     public async Task<ActionResult> CreateOrder(List<string> selectedPizzaIds)
     {
-        var userId = HttpContext.Session.GetString("UserId"); // assuming user id is stored
+        var userId = _tokenProvider.GetUserId();
         var orderRequest = new CreateOrderRequest
         {
             PizzaIds = { selectedPizzaIds },
             UserId = userId
         };
+
 
         var response = await _orderClient.CreateOrderAsync(orderRequest);
 
@@ -49,5 +51,69 @@ public class PizzaController : Controller
             ModelState.AddModelError("", "Failed to create order.");
             return RedirectToAction("ListPizzas");
         }
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> ManagePizzas()
+    {
+        var response = await _pizzaClient.ListPizzasAsync(new ListPizzasRequest());
+        var pizzas = response.Pizzas.Select(p => new CreatePizzaViewModel
+        {
+            Name = p.Name,
+            CrustType = (pizzalandClient.Models.PizzaCrust)p.CrustType,
+            Ingredients = p.Ingredients.ToList(),
+            Price = p.Price
+        }).ToList();
+
+        ViewBag.Pizzas = pizzas;
+        return View(new CreatePizzaViewModel());
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CreatePizza(CreatePizzaViewModel model)
+    {
+        if (!ModelState.IsValid)
+        {
+            // Fetch the list of pizzas again if model state is invalid
+            var response = await _pizzaClient.ListPizzasAsync(new ListPizzasRequest());
+            ViewBag.Pizzas = response.Pizzas.Select(p => new CreatePizzaViewModel
+            {
+                Name = p.Name,
+                CrustType = (PizzaCrust)p.CrustType,
+                Ingredients = p.Ingredients.ToList(),
+                Price = p.Price
+            }).ToList();
+
+            return View("ManagePizzas", model);
+        }
+
+        // Check if the user is authenticated before proceeding
+        var token = _tokenProvider.GetToken(CancellationToken.None);
+        if (string.IsNullOrEmpty(token))
+        {
+            TempData["ErrorMessage"] = "You must be logged in to create a pizza.";
+            return RedirectToAction("Login", "User");
+        }
+
+        var createPizzaRequest = new CreatePizzaRequest
+        {
+            Name = model.Name,
+            CrustType = (pizzalandClient.PizzaCrust)model.CrustType,
+            Ingredients = { model.Ingredients },
+            Price = model.Price
+        };
+
+        await _pizzaClient.CreatePizzaAsync(createPizzaRequest);
+
+        return RedirectToAction("ManagePizzas");
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeletePizza(string id)
+    {
+        await _pizzaClient.DeletePizzaAsync(new DeletePizzaRequest { Id = id });
+        return RedirectToAction("ManagePizzas");
     }
 }
