@@ -1,0 +1,56 @@
+syntax = "proto3";
+
+option csharp_namespace = "pizzalandClient";
+
+package Orders;
+
+import "google/protobuf/timestamp.proto";
+
+service OrderService {
+  rpc CreateOrder (CreateOrderRequest) returns (OrderResponse);
+  rpc GetOrder (GetOrderRequest) returns (OrderResponse);
+  rpc UpdateOrder (UpdateOrderRequest) returns (OrderResponse);
+  rpc DeleteOrder (DeleteOrderRequest) returns (DeleteOrderResponse);
+  rpc ListOrders (ListOrdersRequest) returns (ListOrdersResponse);
+}
+
+message CreateOrderRequest {
+  repeated string pizza_ids = 1;
+  string user_id = 2;
+}
+
+message GetOrderRequest {
+  string id = 1;
+}
+
+message UpdateOrderRequest {
+  OrderProto Order = 1;
+}
+
+message DeleteOrderRequest {
+  string id = 1;
+}
+
+message OrderResponse {
+  OrderProto Order = 1;
+}
+
+message DeleteOrderResponse {
+  string message = 1;
+}
+
+message ListOrdersRequest {
+}
+
+message ListOrdersResponse {
+  repeated OrderProto Orders = 1;
+}
+
+message OrderProto {
+  string id = 1;
+  string user_id = 2;
+  google.protobuf.Timestamp time_of_order = 3;
+  string pizza_ids_ordered = 4;
+  double total_price = 5;
+  bool is_delivery_covored = 6;
+}

@@ -1,0 +1,17 @@
+@model List<PizzaViewModel>
+
+<h2>Pizza Menu</h2>
+
+<form method="post" action="@Url.Action("CreateOrder", "Pizza")">
+    <div class="pizza-list">
+        @foreach (var pizza in Model)
+        {
+                <div class="pizza-item">
+                    <h3>@pizza.Name (@pizza.Price)</h3>
+                    <p>Ingredients: @pizza.Ingredients</p>
+                    <input type="checkbox" name="selectedPizzaIds" value="@pizza.Id" /> Select
+                </div>
+        }
+    </div>
+    <button type="submit" class="btn btn-primary">Order Selected Pizzas</button>
+</form>

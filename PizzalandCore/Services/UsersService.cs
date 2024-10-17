@@ -29,11 +29,11 @@ public class UsersService(IUserRepository userRepository, IJwtGenerator jwtGener
 
         return new UserResponse { User = userResponse };
     }
-    public async override Task<UserResponse> Login(LoginRequest request, ServerCallContext context)
+    public async override Task<UserResponse?> Login(LoginRequest request, ServerCallContext context)
     {
         var foundUser = await _userRepository.GetUserByEmailAsync(request.Email);
 
-        if (foundUser!.Password != request.Password) return default!;
+        if (foundUser?.Password != request.Password) return default!;
 
         foundUser.Token = _jwtGenerator.GetJwt(foundUser.Email, foundUser.Name);
 

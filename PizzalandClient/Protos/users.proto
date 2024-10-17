@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-option csharp_namespace = "PizzalandCore";
+option csharp_namespace = "pizzalandClient";
 
 package users;
 
