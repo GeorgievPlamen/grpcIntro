@@ -1,0 +1,45 @@
+@model List<pizzalandClient.Models.OrderViewModel>
+@{
+    ViewBag.Title = "Manage Orders";
+}
+
+<h2>Manage Orders</h2>
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger" role="alert">
+        @TempData["ErrorMessage"]
+    </div>
+}
+
+<hr />
+
+<h3>Existing Orders</h3>
+
+@if (Model.Count > 0)
+{
+    <ul class="list-group">
+        @foreach (var order in Model)
+        {
+            <li class="list-group-item">
+                <div>
+                    <strong>Order ID:</strong> @order.Id<br />
+                    <strong>User ID:</strong> @order.UserId<br />
+                    <strong>Pizza IDs:</strong> @string.Join(", ", order.PizzaIds)<br />
+                    <strong>Time of Order:</strong> @order.TimeOfOrder<br />
+                    <strong>Total Price:</strong> @order.TotalPrice<br />
+                    <strong>Delivery Covered:</strong> @(order.IsDeliveryCovered ? "Yes" : "No")
+                </div>
+                <form asp-controller="Order" asp-action="DeleteOrder" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" value="@order.Id" />
+                    <button type="submit" class="btn btn-danger mt-2">Delete</button>
+                </form>
+            </li>
+        }
+    </ul>
+}
+else
+{
+    <p>No orders available.</p>
+}

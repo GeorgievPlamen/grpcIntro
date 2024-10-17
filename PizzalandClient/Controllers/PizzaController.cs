@@ -44,7 +44,8 @@ public class PizzaController(ITokenProvider tokenProvider, ILogger<PizzaControll
 
         if (response.Order != null)
         {
-            return RedirectToAction("OrderSuccess");
+            return RedirectToAction("ManageOrders", "Order");
+
         }
         else
         {
