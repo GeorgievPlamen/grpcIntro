@@ -1,3 +1,5 @@
+namespace pizzalandClient.Models;
+
 public class PizzaViewModel
 {
     public string Id { get; set; } = null!;

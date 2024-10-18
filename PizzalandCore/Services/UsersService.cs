@@ -29,6 +29,7 @@ public class UsersService(IUserRepository userRepository, IJwtGenerator jwtGener
 
         return new UserResponse { User = userResponse };
     }
+    
     public async override Task<UserResponse?> Login(LoginRequest request, ServerCallContext context)
     {
         var foundUser = await _userRepository.GetUserByEmailAsync(request.Email);

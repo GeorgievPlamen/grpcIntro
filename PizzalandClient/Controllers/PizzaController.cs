@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
-using pizzalandClient;
 using pizzalandClient.Interfaces;
 using pizzalandClient.Models;
-using PizzaCrust = pizzalandClient.Models.PizzaCrust;
+
+namespace pizzalandClient.Controllers;
 
 public class PizzaController(ITokenProvider tokenProvider, ILogger<PizzaController> logger, PizzaService.PizzaServiceClient pizzaClient, OrderService.OrderServiceClient orderClient) : Controller
 {
@@ -22,7 +22,7 @@ public class PizzaController(ITokenProvider tokenProvider, ILogger<PizzaControll
         {
             Id = p.Id,
             Name = p.Name,
-            Ingredients = string.Join(", ", p.Ingredients),
+            Ingredients = string.Join(",", p.Ingredients),
             Price = p.Price
         }).ToList();
 
@@ -33,6 +33,7 @@ public class PizzaController(ITokenProvider tokenProvider, ILogger<PizzaControll
     public async Task<ActionResult> CreateOrder(List<string> selectedPizzaIds)
     {
         var userId = _tokenProvider.GetUserId();
+
         var orderRequest = new CreateOrderRequest
         {
             PizzaIds = { selectedPizzaIds },
@@ -76,12 +77,11 @@ public class PizzaController(ITokenProvider tokenProvider, ILogger<PizzaControll
     {
         if (!ModelState.IsValid)
         {
-            // Fetch the list of pizzas again if model state is invalid
             var response = await _pizzaClient.ListPizzasAsync(new ListPizzasRequest());
             ViewBag.Pizzas = response.Pizzas.Select(p => new CreatePizzaViewModel
             {
                 Name = p.Name,
-                CrustType = (PizzaCrust)p.CrustType,
+                CrustType = (Models.PizzaCrust)p.CrustType,
                 Ingredients = p.Ingredients.ToList(),
                 Price = p.Price
             }).ToList();
@@ -89,7 +89,6 @@ public class PizzaController(ITokenProvider tokenProvider, ILogger<PizzaControll
             return View("ManagePizzas", model);
         }
 
-        // Check if the user is authenticated before proceeding
         var token = _tokenProvider.GetToken(CancellationToken.None);
         if (string.IsNullOrEmpty(token))
         {

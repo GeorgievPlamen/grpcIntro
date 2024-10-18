@@ -16,10 +16,10 @@ builder.Services.AddScoped<IPizzaRepository, PizzaRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 builder.Services.AddScoped<IJwtGenerator, JwtGenerator>();
+builder.Services.AddAuthorization();
 builder.Services.AddAuthentication(defaultScheme: JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(opt => opt.TokenValidationParameters = new()
     { ValidateIssuer = false, ValidateAudience = false, ValidateLifetime = true, IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("SuperSecretKeyDontUseLikeThisInRealEnvironment")) });
-builder.Services.AddAuthorization();
 
 var app = builder.Build();
 

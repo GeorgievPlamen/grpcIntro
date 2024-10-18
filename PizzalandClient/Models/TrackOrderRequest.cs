@@ -1,7 +1,6 @@
-namespace pizzalandClient.Models
+namespace pizzalandClient.Models;
+
+public class TrackOrderRequest
 {
-    public class TrackOrderRequest
-    {
-        public string OrderId { get; set; }
-    }
+    public string? OrderId { get; set; }
 }

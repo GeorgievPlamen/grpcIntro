@@ -111,12 +111,12 @@ public class UserController(ILogger<UserController> logger, UserService.UserServ
         }
     }
 
-    public override async void OnActionExecuting(ActionExecutingContext context)
+    public override void OnActionExecuting(ActionExecutingContext context)
     {
         var token = _tokenProvider.GetToken(CancellationToken.None);
         if (!string.IsNullOrEmpty(token))
         {
-            string userName = GetUserNameFromToken(token);
+            string? userName = GetUserNameFromToken(token);
             ViewBag.IsLoggedIn = true;
             ViewBag.UserName = userName;
         }
@@ -143,7 +143,7 @@ public class UserController(ILogger<UserController> logger, UserService.UserServ
         return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
     }
 
-    private string GetUserNameFromToken(string token)
+    private string? GetUserNameFromToken(string token)
     {
         var handler = new JwtSecurityTokenHandler();
         var jwtToken = handler.ReadJwtToken(token);
